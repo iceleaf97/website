@@ -125,7 +125,7 @@ function showVal(value) {
 
 function createBody() {
     jsonLoader = new THREE.JSONLoader();
-    jsonLoader.load('models/Muscular_n.json', addNervToScn);
+    jsonLoader.load('../models/Muscular_n.json', addNervToScn);
     function addNervToScn(geometry, material) {
         var mtl = new THREE.MeshFaceMaterial(material);
         muscleMesh= new THREE.Mesh(geometry, mtl);
@@ -151,7 +151,7 @@ function createBody() {
 
 
     //create chair
-    jsonLoader.load('models/Skeleton_n.json', addGlassToScn);
+    jsonLoader.load('../models/Skeleton_n.json', addGlassToScn);
     function addGlassToScn(geometry, material) {
         Mtl2 = new THREE.MeshFaceMaterial(material);
         skeletionMesh = new THREE.Mesh(geometry, Mtl2);
@@ -173,7 +173,7 @@ function createBody() {
         });
 
     }
-    jsonLoader.load('models/Circulatory_n.json', addCirclToScene);
+    jsonLoader.load('../models/Circulatory_n.json', addCirclToScene);
     function addCirclToScene(geometry, material) {
         var mtl = new THREE.MeshFaceMaterial(material);
         circlemesh = new THREE.Mesh(geometry, mtl);
