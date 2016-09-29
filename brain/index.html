@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Brain</title>
+    <script src="js/three.min.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/MTLLoader.js"></script>
+    <script src="js/OBJLoader.js"></script>
+    <script src="js/dat.gui.min.js"></script>
+</head>
+<body>
+
+<script type="x-shader/x-vertex" id="vertexshader">
+
+    attribute float alpha;
+    attribute vec3 a_color;
+
+    uniform float pointsize;
+
+    varying vec3 v_pos;
+    varying float vAlpha;
+    varying vec3 v_color;
+
+    void main() {
+
+        vAlpha = alpha;
+        v_pos = position;
+
+        v_color = a_color;
+
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+        gl_PointSize = pointsize;
+
+        gl_Position = projectionMatrix * mvPosition;
+
+    }
+
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader">
+
+    uniform vec3 color;
+    varying vec3 v_pos;
+    varying float vAlpha;
+    varying vec3 v_color;
+
+    void main() {
+
+        gl_FragColor = vec4( v_color, vAlpha );
+
+    }
+
+</script>
+<script type="x-shader/x-vertex" id="vertexshader2">
+
+    attribute float alpha2;
+    attribute vec3 a_color2;
+
+    uniform float pointsize2;
+
+    varying vec3 v_pos2;
+    varying float vAlpha2;
+    varying vec3 v_color2;
+
+    void main() {
+
+        vAlpha2 = alpha2;
+        v_pos2 = position;
+
+        v_color2 = a_color2;
+
+        vec4 mvPosition2 = modelViewMatrix * vec4( position, 1.0 );
+
+        gl_PointSize = pointsize2;
+
+        gl_Position = projectionMatrix * mvPosition2;
+
+    }
+
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader2">
+
+    varying vec3 v_pos2;
+    varying float vAlpha2;
+    varying vec3 v_color2;
+
+    void main() {
+
+        gl_FragColor = vec4( v_color2, vAlpha2 );
+
+    }
+
+</script>
+
+<script>
+    // PointCloud with Custom, Dynamic Attribute
+
+    var renderer, scene, camera, cloud,cloud2, uniforms,uniforms2,mesh,mesh2,control, cerebrum, cerebellum;
+    var a_color,a_color2;
+    var colorG = 1;
+    var clock = new THREE.Clock();
+    var time =0;
+    var gui = new dat.GUI();
+    var params = {
+        colorR: 39,
+        colorG: 78,
+        colorB: 78,
+        pointSize: 2,
+        alpha: 0.1,
+        cerebellumColorR: 41,
+        cerebellumColorG: 47,
+        cerebellumColorB: 75,
+        cerebellumPointSize: 2,
+        cerebellumAlpha: 0.3
+    };
+
+
+
+
+
+
+    init();
+    animate();
+
+    function init() {
+
+        // renderer
+        renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
+        renderer.setClearColor( 0x000000 );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+
+        // scene
+        scene = new THREE.Scene();
+
+        //camera
+        camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera.position.set(0,10,30);
+        control = new THREE.OrbitControls(camera, renderer.domElement);
+        control.target = new THREE.Vector3(0,0,0);
+        control.update();
+
+        // point cloud geometry
+        var manager = new THREE.LoadingManager();
+        manager.onProgress = function (item, loaded, total) {
+            console.log(item, loaded, total);
+        };
+        manager.onLoad = function () {
+            console.log('all items loaded');
+        };
+        manager.onError = function () {
+            console.log('there has been an error');
+        };
+
+        var jsonLoader = new THREE.JSONLoader(manager);
+
+
+        jsonLoader.load('models/cerebrum.json', addJsonToScn);
+        function addJsonToScn(geometry) {
+            var cerebrumGeom = new THREE.BufferGeometry().fromGeometry(geometry);
+
+            console.log(cerebrumGeom.attributes.position.count);
+            var numVertices = cerebrumGeom.attributes.position.count;
+            var alphas = new Float32Array(numVertices*1);
+            for(var i =0; i<numVertices; i++){
+                alphas[i] = params.alpha;
+            }
+            a_color = new Float32Array(numVertices*3);
+            for(var i=0; i<numVertices * 3; i += 3){
+                a_color[i] = params.colorR/100;
+                a_color[i+1] = params.colorG/100;
+                a_color[i+2] = params.colorB/100;
+            }
+
+            cerebrumGeom.addAttribute('a_color', new THREE.BufferAttribute(a_color, 3)); //訊息傳回給vertexShader
+
+            cerebrumGeom.addAttribute('alpha', new THREE.BufferAttribute(alphas, 1));//訊息傳回給vertexShader
+
+            uniforms ={
+                color: { type: "c", value: new THREE.Color(0x00ffff)},
+                pointsize:{type: "f", value: params.pointSize },
+            };
+
+            var shaderMtl = new THREE.ShaderMaterial({
+               uniforms:        uniforms,
+               vertexShader:    document.getElementById('vertexshader').textContent,
+               fragmentShader:  document.getElementById('fragmentshader').textContent,
+               transparent:     true
+            });
+
+            mesh = new THREE.Points(cerebrumGeom, shaderMtl);
+            cloud = new THREE.Line(cerebrumGeom, shaderMtl);
+
+            scene.add(cloud);
+            scene.add(mesh);
+
+            console.log(mesh.geometry.attributes);
+            console.log(mesh.material.uniforms.pointsize.value);
+            gui.add(params, 'colorR', 0, 100).onFinishChange(function () {
+                params.colorR /= 100;
+                var numPoint = mesh.geometry.attributes.position.count;
+                for(var i=0; i<numPoint*3; i +=3){
+                    a_color[i] = params.colorR;
+                }
+                mesh.geometry.attributes.a_color.needsUpdate =true;
+            });
+            gui.add(params, 'colorG', 0, 100).onFinishChange(function () {
+                params.colorG /= 100;
+                var numPoint = mesh.geometry.attributes.position.count;
+                for(var i=0; i<numPoint*3; i +=3){
+                    a_color[i+1] = params.colorG;
+                }
+                mesh.geometry.attributes.a_color.needsUpdate =true;
+            });
+            gui.add(params, 'colorB', 0, 100).onFinishChange(function () {
+                params.colorB /= 100;
+                var numPoint = mesh.geometry.attributes.position.count;
+                for(var i=0; i<numPoint*3; i +=3){
+                    a_color[i+2] = params.colorB;
+                }
+                mesh.geometry.attributes.a_color.needsUpdate =true;
+            });
+            gui.add(params, 'alpha', 0, 0.5).onFinishChange(function () {
+                var numVertices = cerebrumGeom.attributes.position.count;
+                for(var i =0; i<numVertices; i++){
+                    alphas[i] = params.alpha;
+                }
+                mesh.geometry.attributes.alpha.needsUpdate =true;
+            });
+
+            gui.add(params, 'pointSize', 0,4).onFinishChange(function () {
+                mesh.material.uniforms.pointsize.value = params.pointSize;
+
+              // mesh.material.uniforms.pointsize.needsUpdate = true; //不用寫
+            });
+
+
+        }
+        jsonLoader.load('models/cerebellum.json', addJson2ToScn);
+        function addJson2ToScn(geometry) {
+            var cerebellumGeom = new THREE.BufferGeometry().fromGeometry(geometry);
+            var numVertices = cerebellumGeom.attributes.position.count;
+            var alphas2 = new Float32Array(numVertices*1);
+            for(var i =0; i<numVertices; i++){
+                alphas2[i] = params.cerebellumAlpha;
+            }
+            a_color2 = new Float32Array(numVertices*3);
+            for(var i=0; i<numVertices * 3; i += 3){
+                a_color2[i] = params.cerebellumColorR/100;
+                a_color2[i+1] = params.cerebellumColorG/100;
+                a_color2[i+2] = params.cerebellumColorB/100;
+            }
+
+            cerebellumGeom.addAttribute('a_color2', new THREE.BufferAttribute(a_color2, 3)); //訊息傳回給vertexShader
+
+            cerebellumGeom.addAttribute('alpha2', new THREE.BufferAttribute(alphas2, 1));//訊息傳回給vertexShader
+
+            uniforms2 ={
+                pointsize2:{type: "f", value: params.cerebellumPointSize },
+            };
+
+            var shaderMtl = new THREE.ShaderMaterial({
+                uniforms:        uniforms2,
+                vertexShader:    document.getElementById('vertexshader2').textContent,
+                fragmentShader:  document.getElementById('fragmentshader2').textContent,
+                transparent:     true
+            });
+
+            mesh2 = new THREE.Points(cerebellumGeom, shaderMtl);
+            cloud2 = new THREE.Line(cerebellumGeom, shaderMtl);
+            scene.add(cloud2);
+            scene.add(mesh2);
+
+            console.log(mesh2.geometry.attributes);
+            console.log(mesh2.material.uniforms.pointsize2.value);
+            gui.add(params, 'cerebellumColorR', 0, 100).onFinishChange(function () {
+                params.cerebellumColorR /= 100;
+                var numPoint = mesh2.geometry.attributes.position.count;
+                for(var i=0; i<numPoint*3; i +=3){
+                    a_color2[i] = params.cerebellumColorR;
+                }
+                mesh2.geometry.attributes.a_color2.needsUpdate =true;
+            });
+            gui.add(params, 'cerebellumColorG', 0, 100).onFinishChange(function () {
+                params.cerebellumColorG /= 100;
+                var numPoint = mesh2.geometry.attributes.position.count;
+                for(var i=0; i<numPoint*3; i +=3){
+                    a_color2[i+1] = params.cerebellumColorG;
+                }
+                mesh2.geometry.attributes.a_color2.needsUpdate =true;
+            });
+            gui.add(params, 'cerebellumColorB', 0, 100).onFinishChange(function () {
+                params.cerebellumColorB /= 100;
+                var numPoint = mesh2.geometry.attributes.position.count;
+                for(var i=0; i<numPoint*3; i +=3){
+                    a_color2[i+2] = params.cerebellumColorB;
+                }
+                mesh2.geometry.attributes.a_color2.needsUpdate =true;
+            });
+            gui.add(params, 'cerebellumAlpha', 0, 0.5).onFinishChange(function () {
+                var numVertices = cerebellumGeom.attributes.position.count;
+                for(var i =0; i<numVertices; i++){
+                    alphas2[i] = params.cerebellumAlpha;
+                }
+                mesh2.geometry.attributes.alpha2.needsUpdate =true;
+            });
+
+            gui.add(params, 'cerebellumPointSize', 0,4).onFinishChange(function () {
+                mesh2.material.uniforms.pointsize2.value = params.cerebellumPointSize;
+
+                // mesh.material.uniforms.pointsize.needsUpdate = true; //不用寫
+            });
+        }
+
+
+
+
+    }
+
+
+
+    function animate() {
+        var dt = clock.getDelta();
+        dt *= 2;
+        time += dt;
+        if(cloud && mesh && cloud2 && mesh2){
+     /*       var numPoint = mesh.geometry.attributes.position.count;
+            for(var i=0; i<numPoint*3; i +=3){
+                a_color[i] =Math.sin(time)+1.2;
+                //a_color[i+1] = Math.sin(time)+1.2;
+                //a_color[i+2] =Math.sin(time)+1.2;
+
+
+            }
+           mesh.geometry.attributes.a_color.needsUpdate =true;
+      */
+            mesh.rotation.y += 0.005;
+            cloud.rotation.y += 0.005;
+            mesh2.rotation.y += 0.005;
+            cloud2.rotation.y += 0.005;
+        }
+
+        requestAnimationFrame( animate );
+
+        renderer.render( scene, camera );
+
+    }
+
+
+</script>
+
+</body>
+</html>
