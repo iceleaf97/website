@@ -1,0 +1,181 @@
+<html>
+<head>
+<title>Barcode marker example with Three.js</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+<style>
+html,body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	text-align: center;
+	overflow-x: hidden;
+}
+.portrait canvas {
+	transform-origin: 0 0;
+	transform: rotate(-90deg) translateX(-100%);
+}
+.desktop canvas {
+ 	transform: scale(-1, 1);
+}
+</style>
+</head>
+<body>
+
+
+<script src="../build/artoolkit.debug.js"></script>
+<script src="../js/artoolkit.api.js"></script>
+<script  src="js/third_party/three.js/three.min.js" async></script>
+<script  src="../js/artoolkit.three.js" async></script>
+<script src="js/third_party/three.js/dat.gui.min.js"></script>
+
+<script>
+	var gui, params;
+
+
+window.ARThreeOnLoad = function() {
+	createGUI();
+
+	ARController.getUserMediaThreeScene({maxARVideoSize: 320, cameraParam: 'Data/camera_para.dat',
+	onSuccess: function(arScene, arController, arCamera) {
+
+		document.body.className = arController.orientation;
+
+		arController.setPatternDetectionMode(artoolkit.AR_MATRIX_CODE_DETECTION);
+
+		var renderer = new THREE.WebGLRenderer({antialias: true});
+		if (arController.orientation === 'portrait') {
+			var w = (window.innerWidth / arController.videoHeight) * arController.videoWidth;
+			var h = window.innerWidth;
+			renderer.setSize(w, h);
+			renderer.domElement.style.paddingBottom = (w-h) + 'px';
+		} else {
+			if (/Android|mobile|iPad|iPhone/i.test(navigator.userAgent)) {
+				renderer.setSize(window.innerWidth, (window.innerWidth / arController.videoWidth) * arController.videoHeight);
+			} else {
+				renderer.setSize(arController.videoWidth, arController.videoHeight);
+				document.body.className += ' desktop';
+			}
+		}
+
+		document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+		// See /doc/patterns/Matrix code 3x3 (72dpi)/20.png
+		var markerRoot = arController.createThreeBarcodeMarker(12);
+		var markerRoot2 = arController.createThreeBarcodeMarker(26);
+
+		var ambientLt = new THREE.AmbientLight(0xffffff, 1.2);
+
+		arScene.scene.add(ambientLt);
+
+//		var sphere = new THREE.Mesh(
+//			new THREE.SphereGeometry(0.5, 8, 8),
+//			new THREE.MeshBasicMaterial({color:0xdddddd})
+//		);
+//
+//		sphere.material.shading = THREE.FlatShading;
+//		sphere.position.z = 0.5;
+//		markerRoot.add(sphere);
+//		arScene.scene.add(markerRoot);
+
+		var jsonLoader = new THREE.JSONLoader();
+		var sphere;
+		var sphere2;
+
+		jsonLoader.load("model/Blastoise.json", addCubone);
+		function addCubone(geometry, material) {
+			var mtl = new THREE.MeshFaceMaterial(material);
+			sphere = new THREE.Mesh(geometry, mtl);
+			sphere.rotation.x = Math.PI/2;
+			//sphere.position.z  = 1.5;
+			sphere.position.y  = -0.5;
+			sphere.scale.set(0.5, 0.5, 0.5);
+
+
+			markerRoot2.add(sphere);
+			arScene.scene.add(markerRoot2);
+			console.log(sphere);
+
+		}
+
+		jsonLoader.load("model/Lapras.json", addCubone2);
+		function addCubone2(geometry, material) {
+			var mtl = new THREE.MeshFaceMaterial(material);
+
+			sphere2 = new THREE.Mesh(geometry, mtl);
+			sphere2.rotation.x = Math.PI/2;
+
+			//sphere2.rotation.y = Math.PI/5;
+			sphere2.scale.set(0.6, 0.6, 0.6);
+
+			//sphere2.position.y  = -2;
+			//sphere2.position.z  = 1.5;
+
+
+			markerRoot.add(sphere2);
+			arScene.scene.add(markerRoot);
+			console.log(sphere2);
+
+		}
+
+
+		var rotationV = 0;
+		//var rotationTarget = 0;
+
+		renderer.domElement.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			//rotationTarget += 1;
+		}, false);
+var dt = 0;
+		var tick = function() {
+			arScene.process();
+			arScene.renderOn(renderer);
+			if(sphere && sphere2){
+				//rotationV += (rotationTarget - sphere.rotation.z) * 0.05;
+				//sphere.rotation.y += 0.01;
+
+				sphere.rotation.y = 0.5*Math.cos(dt);
+				sphere2.position.x = params.posx;
+				sphere2.position.y = params.posy;
+				sphere2.position.z = params.posz;
+				sphere2.rotation.y = params.roty;
+
+			}
+
+			dt += Math.PI/180;
+			//rotationV *= 0.8;
+
+			requestAnimationFrame(tick);
+		};
+
+		tick();
+
+	}});
+
+	delete window.ARThreeOnLoad;
+
+};
+
+if (window.ARController && ARController.getUserMediaThreeScene) {
+	ARThreeOnLoad();
+}
+
+function createGUI() {
+	gui = new dat.GUI();
+	params = {
+		roty:0,
+		posx:0,
+		posy:0,
+		posz:0
+
+	};
+	gui.add(params, 'roty', -Math.PI,Math.PI);
+	gui.add(params, 'posx', -2, 2);
+	gui.add(params, 'posy', -2, 2);
+	gui.add(params, 'posz', 0, 2);
+
+}
+
+</script>
+
+</body>
+</html>
