@@ -81,14 +81,14 @@ window.ARThreeOnLoad = function() {
 		var sphere;
 		var sphere2;
 
-		jsonLoader.load("model/Blastoise.json", addCubone);
+		jsonLoader.load("model/bee.json", addCubone);
 		function addCubone(geometry, material) {
 			var mtl = new THREE.MeshFaceMaterial(material);
 			sphere = new THREE.Mesh(geometry, mtl);
 			sphere.rotation.x = Math.PI/2;
 			//sphere.position.z  = 1.5;
-			sphere.position.y  = -0.5;
-			sphere.scale.set(0.5, 0.5, 0.5);
+			sphere.position.y  = 1;
+			sphere.scale.set(0.2, 0.2, 0.2);
 
 
 			markerRoot2.add(sphere);
