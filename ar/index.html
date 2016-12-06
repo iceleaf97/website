@@ -2,6 +2,7 @@
 <head>
 <title>Barcode marker example with Three.js</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
 <style>
 html,body {
 	margin: 0;
@@ -9,6 +10,8 @@ html,body {
 	width: 100%;
 	text-align: center;
 	overflow-x: hidden;
+    font-family: 'Montserrat', sans-serif;
+
 }
 .portrait canvas {
 	transform-origin: 0 0;
@@ -17,6 +20,17 @@ html,body {
 .desktop canvas {
  	transform: scale(-1, 1);
 }
+    #imgbox {
+        position: relative;
+        width: 50vw;
+        height: 50vh;
+        left: 25vw;
+        background-image: url("./ar marker.png");
+        background-position: center center;
+        -webkit-background-size: auto 100%;
+        background-size: auto 100%;
+        background-repeat: no-repeat;
+    }
 </style>
 </head>
 <body>
@@ -207,8 +221,9 @@ if (window.ARController && ARController.getUserMediaThreeScene) {
 </script>
 
 <h3>Firefox is the recommend browser for viewing the AR webpage.</h3>
-<h3>Print the <a href="pattern2.png">Augmented Reality Marker</a> at a white paper.</h3>
-<h3>This demo will catch the marker and show two models on the pattern.</h3>
+<h3 style="color: #e05038">iOS is not supported yet !</h3>
+<!--<h3>Print the <a href="https://dl.dropboxusercontent.com/u/22576846/AR/jsartoolkit5-master/examples/pattern/pattern.png">Augmented Reality Marker</a> at a white paper.</h3>-->
+<div id="imgbox"></div>
 
 </body>
 </html>
