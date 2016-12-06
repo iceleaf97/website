@@ -33,7 +33,7 @@ html,body {
 
 
 window.ARThreeOnLoad = function() {
-	createGUI();
+//	createGUI();
 
 	ARController.getUserMediaThreeScene({maxARVideoSize: 320, cameraParam: 'Data/camera_para.dat',
 	onSuccess: function(arScene, arController, arCamera) {
@@ -43,6 +43,7 @@ window.ARThreeOnLoad = function() {
 		arController.setPatternDetectionMode(artoolkit.AR_MATRIX_CODE_DETECTION);
 
 		var renderer = new THREE.WebGLRenderer({antialias: true});
+		renderer.shadowMap.enabled=true;
 		if (arController.orientation === 'portrait') {
 			var w = (window.innerWidth / arController.videoHeight) * arController.videoWidth;
 			var h = window.innerWidth;
@@ -60,10 +61,10 @@ window.ARThreeOnLoad = function() {
 		document.body.insertBefore(renderer.domElement, document.body.firstChild);
 
 		// See /doc/patterns/Matrix code 3x3 (72dpi)/20.png
-		var markerRoot = arController.createThreeBarcodeMarker(12);
+//		var markerRoot = arController.createThreeBarcodeMarker(12);
 		var markerRoot2 = arController.createThreeBarcodeMarker(26);
 
-		var ambientLt = new THREE.AmbientLight(0xffffff, 1.2);
+		var ambientLt = new THREE.AmbientLight(0xffffff, 0.7);
 
 		arScene.scene.add(ambientLt);
 
@@ -80,42 +81,67 @@ window.ARThreeOnLoad = function() {
 		var jsonLoader = new THREE.JSONLoader();
 		var sphere;
 		var sphere2;
+		var totalmesh = new THREE.Object3D();
 
-		jsonLoader.load("model/bee.json", addCubone);
+		jsonLoader.load("model/helicopterB.json", addCubone);
 		function addCubone(geometry, material) {
+		    var d_light = new THREE.DirectionalLight(0xffffff, 1);
+		    d_light.position.set(100, 100, 0);
+		    d_light.castShadow = true;
+
 			var mtl = new THREE.MeshFaceMaterial(material);
 			sphere = new THREE.Mesh(geometry, mtl);
+			sphere.receiveShadow = true;
 			sphere.rotation.x = Math.PI/2;
 			//sphere.position.z  = 1.5;
-			sphere.position.y  = 1;
-			sphere.scale.set(0.2, 0.2, 0.2);
+			sphere.scale.set(0.4, 0.4, 0.4);
+			totalmesh.add(sphere);
 
 
-			markerRoot2.add(sphere);
+
 			arScene.scene.add(markerRoot2);
+			arScene.scene.add(d_light);
 			console.log(sphere);
+            jsonLoader.load("model/helicopterT2.json", addCubone);
+            function addCubone(geometry, material) {
+                var mtl = new THREE.MeshFaceMaterial(material);
+                sphere2 = new THREE.SkinnedMesh(geometry, mtl);
+                sphere2.receiveShadow = true;
+                sphere2.rotation.x = Math.PI/2;
+                //sphere.position.z  = 1.5;
+                sphere2.position.set(0, 4.7*0.35, 1.554*0.35);
+                sphere2.scale.set(0.4, 0.4, 0.4);
+                totalmesh.add(sphere2);
+
+                markerRoot2.add(totalmesh);
+//                markerRoot2.add(sphere2);
+//                arScene.scene.add(markerRoot2);
+
+
+            }
 
 		}
 
-		jsonLoader.load("model/Lapras.json", addCubone2);
-		function addCubone2(geometry, material) {
-			var mtl = new THREE.MeshFaceMaterial(material);
-
-			sphere2 = new THREE.Mesh(geometry, mtl);
-			sphere2.rotation.x = Math.PI/2;
-
-			//sphere2.rotation.y = Math.PI/5;
-			sphere2.scale.set(0.6, 0.6, 0.6);
-
-			//sphere2.position.y  = -2;
-			//sphere2.position.z  = 1.5;
-
-
-			markerRoot.add(sphere2);
-			arScene.scene.add(markerRoot);
-			console.log(sphere2);
-
-		}
+//
+//		jsonLoader.load("model/Lapras.json", addCubone2);
+//		function addCubone2(geometry, material) {
+//			var mtl = new THREE.MeshFaceMaterial(material);
+//
+//			sphere2 = new THREE.Mesh(geometry, mtl);
+//			sphere2.rotation.x = Math.PI/2;
+//
+//			//sphere2.rotation.y = Math.PI/5;
+//			sphere2.scale.set(0.6, 0.6, 0.6);
+//
+//			//sphere2.position.y  = -2;
+//			//sphere2.position.z  = 1.5;
+//
+//
+//			markerRoot.add(sphere2);
+//			arScene.scene.add(markerRoot);
+//			console.log(sphere2);
+//
+//		}
 
 
 		var rotationV = 0;
@@ -133,11 +159,14 @@ var dt = 0;
 				//rotationV += (rotationTarget - sphere.rotation.z) * 0.05;
 				//sphere.rotation.y += 0.01;
 
-				sphere.rotation.y = 0.5*Math.cos(dt);
-				sphere2.position.x = params.posx;
-				sphere2.position.y = params.posy;
-				sphere2.position.z = params.posz;
-				sphere2.rotation.y = params.roty;
+				totalmesh.rotation.y = 0.5*Math.cos(dt);
+				sphere2.rotation.y += 0.2;
+
+
+//                sphere2.rotation.y = 0.5*Math.cos(dt);
+
+//                sphere2.skeleton.bones[0].rotation.y += 0.2;
+
 
 			}
 
@@ -158,22 +187,22 @@ var dt = 0;
 if (window.ARController && ARController.getUserMediaThreeScene) {
 	ARThreeOnLoad();
 }
-
-function createGUI() {
-	gui = new dat.GUI();
-	params = {
-		roty:0,
-		posx:0,
-		posy:0,
-		posz:0
-
-	};
-	gui.add(params, 'roty', -Math.PI,Math.PI);
-	gui.add(params, 'posx', -2, 2);
-	gui.add(params, 'posy', -2, 2);
-	gui.add(params, 'posz', 0, 2);
-
-}
+//
+//function createGUI() {
+//	gui = new dat.GUI();
+//	params = {
+//		roty:0,
+//		posx:0,
+//		posy:0,
+//		posz:0
+//
+//	};
+//	gui.add(params, 'roty', -Math.PI,Math.PI);
+//	gui.add(params, 'posx', -2, 2);
+//	gui.add(params, 'posy', -2, 2);
+//	gui.add(params, 'posz', 0, 2);
+//
+//}
 
 </script>
 
