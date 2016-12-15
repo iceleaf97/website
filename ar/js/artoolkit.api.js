@@ -1145,6 +1145,7 @@
 		}
 
 		mediaDevicesConstraints.facingMode = facing;
+		console.log(facing);
 
 		navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 		var hdConstraints = {
