@@ -1074,7 +1074,7 @@
 	*/
 	ARController.getUserMedia = function(configuration) {
 		// var facing = configuration.facingMode || 'environment';
-        var facing = { exact: "environment" }|| configuration.facingMode ;
+        var facing = "environment" ;
 
 		var onSuccess = configuration.onSuccess;
 		var onError = configuration.onError || function(err) { console.error("ARController.getUserMedia", err); };
